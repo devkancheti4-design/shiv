@@ -1,0 +1,889 @@
+<title>The Deciding Coin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  *{box-sizing:border-box}
+
+  :root{
+    --ground:#E2E7E3;
+    --ground-2:#EDF1EE;
+    --surface:#F7F9F6;
+    --line:#C6CFC9;
+    --line-soft:#D6DED8;
+    --text:#121A18;
+    --muted:#5A6862;
+    --brass:#8A6112;
+    --brass-ink:#6E4C0C;
+    --brass-soft:rgba(138,97,18,.10);
+    --verdigris:#1E574C;
+    --spot:rgba(255,255,255,.9);
+    --shadow-a:.22;
+    --focus:#8A6112;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0D1214;
+      --ground-2:#121A1C;
+      --surface:#18211F;
+      --line:#2A3639;
+      --line-soft:#212C2E;
+      --text:#E7EDEA;
+      --muted:#8DA09A;
+      --brass:#DFB25F;
+      --brass-ink:#F0D9A6;
+      --brass-soft:rgba(223,178,95,.13);
+      --verdigris:#4FA08D;
+      --spot:rgba(223,178,95,.10);
+      --shadow-a:.5;
+      --focus:#DFB25F;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0D1214;
+    --ground-2:#121A1C;
+    --surface:#18211F;
+    --line:#2A3639;
+    --line-soft:#212C2E;
+    --text:#E7EDEA;
+    --muted:#8DA09A;
+    --brass:#DFB25F;
+    --brass-ink:#F0D9A6;
+    --brass-soft:rgba(223,178,95,.13);
+    --verdigris:#4FA08D;
+    --spot:rgba(223,178,95,.10);
+    --shadow-a:.5;
+    --focus:#DFB25F;
+  }
+
+  body{
+    margin:0;
+    background:var(--ground);
+    color:var(--text);
+    font:400 15px/1.55 "IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+  .eyebrow{
+    font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+    font-size:10.5px;letter-spacing:.17em;text-transform:uppercase;color:var(--muted);
+  }
+
+  .wrap{max-width:1000px;margin:0 auto;padding:18px 20px 48px;display:flex;flex-direction:column;gap:20px}
+
+  /* ---- masthead ---- */
+  .mast{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+        border-bottom:1px solid var(--line);padding-bottom:12px}
+  .mast h1{
+    margin:0;font-family:Cinzel,Georgia,serif;font-weight:700;
+    font-size:16px;letter-spacing:.13em;text-transform:uppercase;color:var(--text);
+  }
+  .mast h1 span{color:var(--brass)}
+  .mast-right{display:flex;align-items:center;gap:14px}
+  .ghost{
+    background:none;border:0;padding:4px 2px;cursor:pointer;color:var(--muted);
+    font-family:"IBM Plex Mono",Menlo,monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  }
+  .ghost:hover{color:var(--brass)}
+  .ghost#sound[aria-pressed="true"]{color:var(--brass)}
+
+  .seg{display:flex;border:1px solid var(--line);border-radius:2px;overflow:hidden}
+  .seg-btn{
+    background:none;border:0;cursor:pointer;padding:7px 12px;color:var(--muted);
+    font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+    font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+    transition:background .2s,color .2s;
+  }
+  .seg-btn + .seg-btn{border-left:1px solid var(--line)}
+  .seg-btn:hover{color:var(--text)}
+  .seg-btn.is-on{background:var(--brass-soft);color:var(--brass)}
+  .seg-btn:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+
+  /* ---- the question ---- */
+  .ask{display:flex;flex-direction:column;gap:9px;align-items:center;text-align:center}
+  .ask .eyebrow{display:flex;align-items:center;gap:9px}
+  .ask .eyebrow::before,.ask .eyebrow::after{content:"";width:26px;height:1px;background:var(--line)}
+  .q{
+    width:100%;max-width:620px;border:0;background:none;color:var(--text);text-align:center;
+    font:500 clamp(21px,4.4vw,29px)/1.3 "IBM Plex Sans",sans-serif;
+    padding:6px 8px 10px;border-bottom:1px dashed var(--line);
+  }
+  .q::placeholder{color:var(--muted);opacity:.75}
+  .q:focus{outline:none;border-bottom-color:var(--brass)}
+  .sample{color:var(--muted);font-size:12px}
+
+  /* ---- table: plaques + stage ---- */
+  .table{
+    display:grid;gap:14px 20px;align-items:center;
+    grid-template-columns:1fr minmax(250px,388px) 1fr;
+    grid-template-areas:"obv stage rev";
+  }
+  @media (max-width:780px){
+    .table{grid-template-columns:1fr 1fr;grid-template-areas:"stage stage" "obv rev";gap:18px 12px}
+  }
+
+  .plaque{
+    grid-area:obv;display:flex;flex-direction:column;gap:7px;
+    background:var(--surface);border:1px solid var(--line);border-radius:3px;
+    padding:14px 15px 13px;position:relative;
+    box-shadow:inset 0 1px 0 var(--ground-2);
+    transition:border-color .35s,box-shadow .35s;
+  }
+  .plaque--rev{grid-area:rev}
+  .plaque::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--line);
+    transition:background .35s;
+  }
+  .plaque.won{border-color:var(--brass);box-shadow:0 0 0 1px var(--brass-soft),0 6px 22px var(--brass-soft)}
+  .plaque.won::before{background:var(--brass)}
+  .plaque-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .side-in{
+    border:0;background:none;color:var(--text);width:100%;padding:0;
+    font:600 17px/1.25 "IBM Plex Sans",sans-serif;
+  }
+  .side-in:focus{outline:none}
+  .side-in::placeholder{color:var(--muted)}
+  .plaque:focus-within{border-color:var(--brass)}
+  .tally{font-family:"IBM Plex Mono",Menlo,monospace;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+  /* ---- stage ---- */
+  .stage{
+    grid-area:stage;position:relative;display:grid;place-items:center;
+    aspect-ratio:1/.84;width:100%;cursor:pointer;touch-action:manipulation;
+    background:radial-gradient(ellipse 62% 48% at 50% 46%,var(--spot),transparent 72%);
+    border-radius:50%;
+  }
+  .stage:focus-visible{outline:2px solid var(--focus);outline-offset:6px;border-radius:12px}
+  canvas{display:block;width:100%;height:100%}
+
+  /* ---- verdict ---- */
+  .verdict{min-height:104px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+  .verdict-word{
+    font-family:Cinzel,Georgia,serif;font-weight:700;line-height:1.06;
+    font-size:clamp(28px,6.6vw,50px);color:var(--text);
+    text-wrap:balance;max-width:16ch;opacity:0;transform:translateY(6px);
+    transition:opacity .5s ease,transform .5s ease;
+  }
+  .verdict.show .verdict-word{opacity:1;transform:none}
+  .verdict-note{
+    max-width:44ch;font-size:13.5px;color:var(--muted);opacity:0;transition:opacity .6s ease .25s;
+  }
+  .verdict.show .verdict-note{opacity:1}
+  .verdict-note b{color:var(--text);font-weight:500}
+
+  /* ---- control ---- */
+  .controls{display:flex;flex-direction:column;align-items:center;gap:11px}
+  .toss{
+    -webkit-appearance:none;appearance:none;cursor:pointer;
+    min-width:246px;padding:16px 34px;border-radius:2px;border:1px solid var(--brass);
+    background:linear-gradient(180deg,var(--brass-soft),transparent);
+    color:var(--brass);
+    font:600 13px/1 "IBM Plex Sans",sans-serif;letter-spacing:.2em;text-transform:uppercase;
+    transition:background .25s,color .25s,border-color .25s,transform .08s;
+    touch-action:manipulation;
+  }
+  .toss:hover{background:var(--brass);color:var(--ground)}
+  .toss:active{transform:translateY(1px)}
+  .toss:focus-visible{outline:2px solid var(--focus);outline-offset:4px}
+  .toss[data-state="spin"]{border-color:var(--verdigris);color:var(--verdigris);background:none}
+  .toss[data-state="spin"]:hover{background:var(--verdigris);color:var(--ground)}
+  .toss[data-state="settle"]{opacity:.45;pointer-events:none;border-color:var(--line);color:var(--muted);background:none}
+  .hint{color:var(--muted);font-size:12px;text-align:center;max-width:46ch}
+
+  /* ---- series ---- */
+  .series{display:none;justify-content:center;gap:8px;flex-wrap:wrap}
+  .series.on{display:flex}
+  .slot{
+    min-width:118px;display:flex;flex-direction:column;gap:3px;align-items:center;
+    border:1px dashed var(--line);border-radius:2px;padding:9px 12px;
+    transition:border-color .3s,background .3s,opacity .3s;
+  }
+  .slot .rnd{
+    font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+    font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
+  }
+  .slot .who{
+    font-size:13.5px;font-weight:500;color:var(--muted);
+    max-width:15ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .slot.filled{border-style:solid;background:var(--surface)}
+  .slot.filled .who{color:var(--text)}
+  .slot.filled.a{border-color:var(--brass)}
+  .slot.filled.b{border-color:var(--verdigris)}
+  .slot.next{border-style:solid;border-color:var(--brass)}
+  .slot.dead{opacity:.38}
+
+  /* ---- log ---- */
+  .log{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px}
+  .log-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .log-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+  .chip{
+    flex:0 0 auto;display:flex;align-items:center;gap:8px;
+    border:1px solid var(--line-soft);border-radius:2px;padding:6px 10px;background:var(--surface);
+    font-family:"IBM Plex Mono",Menlo,monospace;font-size:11px;color:var(--muted);
+    font-variant-numeric:tabular-nums;white-space:nowrap;
+  }
+  .chip b{color:var(--text);font-weight:500;max-width:16ch;overflow:hidden;text-overflow:ellipsis}
+  .chip i{width:6px;height:6px;border-radius:50%;background:var(--brass);flex:0 0 auto}
+  .chip.rev i{background:var(--verdigris)}
+  .log-empty{color:var(--muted);font-size:12px;font-style:italic}
+
+  @media (prefers-reduced-motion:reduce){
+    .verdict-word,.verdict-note{transition:none}
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <h1>The Deciding <span>Coin</span></h1>
+    <div class="mast-right">
+      <div class="seg" role="group" aria-label="Game mode">
+        <button class="seg-btn is-on" id="mode1" aria-pressed="true">Single toss</button>
+        <button class="seg-btn" id="mode3" aria-pressed="false">Best of 3</button>
+      </div>
+      <button class="ghost" id="sound" aria-pressed="true" title="Toggle sound">Sound on</button>
+    </div>
+  </header>
+
+  <section class="ask">
+    <p class="eyebrow">Stuck between two things</p>
+    <input class="q" id="question" value="Should I buy the bike?" maxlength="90" aria-label="Your question">
+    <p class="sample mono" id="sample">Sample question &mdash; type over it</p>
+  </section>
+
+  <section class="table">
+    <div class="plaque" id="plaqueA">
+      <div class="plaque-head"><span class="eyebrow">Obverse &middot; heads</span><span class="tally" id="tallyA">0&times;</span></div>
+      <input class="side-in" id="sideA" value="Buy it" maxlength="34" placeholder="Yes" aria-label="Heads means">
+    </div>
+
+    <div class="stage" id="stage" tabindex="0" role="button" aria-label="Coin. Press to spin, press again to stop.">
+      <canvas id="coin"></canvas>
+    </div>
+
+    <div class="plaque plaque--rev" id="plaqueB">
+      <div class="plaque-head"><span class="eyebrow">Reverse &middot; tails</span><span class="tally" id="tallyB">0&times;</span></div>
+      <input class="side-in" id="sideB" value="Don't buy it" maxlength="34" placeholder="No" aria-label="Tails means">
+    </div>
+  </section>
+
+  <div class="verdict" id="verdict" aria-live="polite">
+    <p class="eyebrow" id="verdictLabel">Nothing decided yet</p>
+    <p class="verdict-word" id="verdictWord">&nbsp;</p>
+    <p class="verdict-note" id="verdictNote"></p>
+  </div>
+
+  <div class="series" id="series" aria-live="polite">
+    <div class="slot" id="slot0"><span class="rnd">Round 1</span><span class="who">&mdash;</span></div>
+    <div class="slot" id="slot1"><span class="rnd">Round 2</span><span class="who">&mdash;</span></div>
+    <div class="slot" id="slot2"><span class="rnd">Round 3</span><span class="who">&mdash;</span></div>
+  </div>
+
+  <div class="controls">
+    <button class="toss" id="toss" data-state="idle">Toss the coin</button>
+    <p class="hint" id="hint">Tap to spin, tap again to stop &mdash; or hold and let go. Spacebar works too.</p>
+  </div>
+
+  <section class="log">
+    <div class="log-head">
+      <span class="eyebrow">Toss log</span>
+      <span class="tally mono" id="logSummary">No tosses yet &middot; crypto-random, 50/50 every time</span>
+      <button class="ghost" id="clearLog">Clear</button>
+    </div>
+    <div class="log-strip" id="logStrip"><span class="log-empty">Your results will stack up here.</span></div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $('coin'), ctx = cv.getContext('2d');
+  var stage = $('stage'), btn = $('toss');
+  var qIn = $('question'), aIn = $('sideA'), bIn = $('sideB');
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var KEY = 'deciding-coin/v1';
+  var YEAR = 'MMXXVI';
+
+  var S = {
+    phase:'idle',        // idle | spin | settle | result
+    angle:0.0,
+    speed:0,
+    hover:0,
+    sheen:0,
+    from:0, to:0, t0:0, dur:1150,
+    result:null,
+    log:[],
+    sound:true,
+    mode:1,            // 1 = single toss, 3 = best of three
+    series:[],         // results of the current series
+    seriesDone:false
+  };
+
+  /* ---------- persistence ---------- */
+  function save(){
+    try{
+      localStorage.setItem(KEY, JSON.stringify({
+        q:qIn.value, a:aIn.value, b:bIn.value, log:S.log.slice(0,40), sound:S.sound, mode:S.mode
+      }));
+    }catch(e){}
+  }
+  function load(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(!raw) return;
+      var d = JSON.parse(raw);
+      if(d && typeof d === 'object'){
+        if(typeof d.q === 'string' && d.q) { qIn.value = d.q; $('sample').style.display='none'; }
+        if(typeof d.a === 'string') aIn.value = d.a;
+        if(typeof d.b === 'string') bIn.value = d.b;
+        if(Array.isArray(d.log)) S.log = d.log.slice(0,40);
+        if(typeof d.sound === 'boolean') S.sound = d.sound;
+        if(d.mode === 3 || d.mode === 1) S.mode = d.mode;
+      }
+    }catch(e){}
+  }
+
+  /* ---------- labels ---------- */
+  function label(i){
+    var v = (i === 0 ? aIn.value : bIn.value).trim();
+    return v || (i === 0 ? 'Yes' : 'No');
+  }
+
+  /* ---------- canvas sizing ---------- */
+  var W=0,H=0,DPR=1;
+  function resize(){
+    var r = stage.getBoundingClientRect();
+    W = Math.max(180, r.width); H = Math.max(180, r.height);
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = Math.round(W*DPR); cv.height = Math.round(H*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    draw();
+  }
+
+  /* ---------- coin painting ---------- */
+  function faceGradient(cx,cy,rx,ry,sheen){
+    var g = ctx.createLinearGradient(cx-rx, cy-ry, cx+rx, cy+ry);
+    g.addColorStop(0,   '#6f4a0e');
+    g.addColorStop(0.18,'#c8971f');
+    g.addColorStop(0.34,'#f4e0a6');
+    g.addColorStop(0.52,'#c08d1d');
+    g.addColorStop(0.70,'#efd79b');
+    g.addColorStop(0.86,'#a5760f');
+    g.addColorStop(1,   '#5f3f0a');
+    return g;
+  }
+
+  function engrave(text, y, size, weight, family){
+    ctx.font = weight + ' ' + size + 'px ' + family;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(56,35,3,.50)';  ctx.fillText(text, 0, y - size*0.055);
+    ctx.fillStyle = 'rgba(255,244,214,.55)'; ctx.fillText(text, 0, y + size*0.075);
+    ctx.fillStyle = 'rgba(84,55,7,.92)';  ctx.fillText(text, 0, y);
+  }
+
+  function wrapLines(text, maxW, size, family){
+    ctx.font = '700 ' + size + 'px ' + family;
+    var words = text.split(/\s+/), lines = [], cur = '';
+    for(var i=0;i<words.length;i++){
+      var test = cur ? cur + ' ' + words[i] : words[i];
+      if(ctx.measureText(test).width > maxW && cur){ lines.push(cur); cur = words[i]; }
+      else cur = test;
+      if(lines.length === 2) break;
+    }
+    if(cur && lines.length < 3) lines.push(cur);
+    return lines.slice(0,3);
+  }
+
+  function drawFace(cx,cy,rx,ry,idx,sheen){
+    if(ry < 0.7) return;
+    var CIN = 'Cinzel,Georgia,serif';
+
+    ctx.save();
+    ctx.beginPath(); ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2); ctx.clip();
+
+    ctx.fillStyle = faceGradient(cx,cy,rx,ry,sheen);
+    ctx.fillRect(cx-rx, cy-ry, rx*2, ry*2);
+
+    var rg = ctx.createRadialGradient(cx-rx*0.28, cy-ry*0.34, rx*0.04, cx, cy, rx*1.02);
+    rg.addColorStop(0,'rgba(255,248,224,.5)');
+    rg.addColorStop(0.55,'rgba(255,255,255,0)');
+    rg.addColorStop(1,'rgba(52,32,2,.45)');
+    ctx.fillStyle = rg; ctx.fillRect(cx-rx, cy-ry, rx*2, ry*2);
+
+    // travelling sheen
+    var sx = cx - rx*1.6 + (sheen*rx*3.2);
+    var sg = ctx.createLinearGradient(sx-rx*0.5, cy-ry, sx+rx*0.5, cy+ry);
+    sg.addColorStop(0,'rgba(255,255,255,0)');
+    sg.addColorStop(0.5,'rgba(255,252,236,.34)');
+    sg.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle = sg; ctx.fillRect(cx-rx, cy-ry, rx*2, ry*2);
+    ctx.restore();
+
+    // rim rings
+    ctx.save();
+    ctx.lineWidth = Math.max(1, rx*0.02);
+    ctx.strokeStyle = 'rgba(58,37,4,.45)';
+    ctx.beginPath(); ctx.ellipse(cx,cy,rx*0.925,ry*0.925,0,0,Math.PI*2); ctx.stroke();
+    ctx.lineWidth = Math.max(0.8, rx*0.012);
+    ctx.strokeStyle = 'rgba(255,244,214,.42)';
+    ctx.beginPath(); ctx.ellipse(cx,cy,rx*0.885,ry*0.885,0,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+
+    // squashed inscription space
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.scale(1, Math.max(ry/rx, 0.001));
+
+    // beaded ring
+    var beads = 56;
+    for(var i=0;i<beads;i++){
+      var a = (i/beads)*Math.PI*2;
+      ctx.beginPath();
+      ctx.arc(Math.cos(a)*rx*0.845, Math.sin(a)*rx*0.845, Math.max(0.6, rx*0.014), 0, Math.PI*2);
+      ctx.fillStyle = (i%2) ? 'rgba(255,244,214,.5)' : 'rgba(70,45,5,.5)';
+      ctx.fill();
+    }
+
+    if(ry/rx > 0.16){
+      engrave(idx === 0 ? 'OBVERSE' : 'REVERSE', -rx*0.52, Math.max(7, rx*0.105), '500', CIN);
+      var size = rx*0.235;
+      var lines = wrapLines(label(idx).toUpperCase(), rx*1.46, size, CIN);
+      var guard = 0;
+      while(lines.length > 2 && guard++ < 6){ size *= 0.86; lines = wrapLines(label(idx).toUpperCase(), rx*1.46, size, CIN); }
+      while(ctx.measureText(lines[0]).width > rx*1.5 && guard++ < 12){
+        size *= 0.9; lines = wrapLines(label(idx).toUpperCase(), rx*1.46, size, CIN);
+      }
+      var lh = size*1.14, top = -((lines.length-1)*lh)/2;
+      for(var l=0;l<lines.length;l++) engrave(lines[l], top + l*lh, size, '700', CIN);
+      engrave(YEAR, rx*0.56, Math.max(7, rx*0.1), '500', CIN);
+    }
+    ctx.restore();
+  }
+
+  function drawEdge(cx, yT, yB, rx, ry){
+    if(yB - yT < 0.4) return;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx+rx, yT);
+    ctx.lineTo(cx+rx, yB);
+    ctx.ellipse(cx, yB, rx, ry, 0, 0, Math.PI, false);
+    ctx.lineTo(cx-rx, yT);
+    ctx.ellipse(cx, yT, rx, ry, 0, Math.PI, Math.PI*2, false);
+    ctx.closePath();
+
+    var g = ctx.createLinearGradient(cx-rx, 0, cx+rx, 0);
+    g.addColorStop(0,'#4e3306');
+    g.addColorStop(0.22,'#a9791225');
+    g.addColorStop(0.24,'#a97912');
+    g.addColorStop(0.46,'#e9cd84');
+    g.addColorStop(0.62,'#b3821a');
+    g.addColorStop(0.82,'#7d580c');
+    g.addColorStop(1,'#3f2904');
+    ctx.fillStyle = g; ctx.fill();
+
+    ctx.clip();
+    var n = 46;
+    ctx.lineWidth = Math.max(0.6, rx*0.014);
+    for(var i=0;i<=n;i++){
+      var u = -Math.PI/2 + Math.PI*(i/n);
+      var x = cx + rx*Math.sin(u);
+      ctx.strokeStyle = 'rgba(48,30,3,' + (0.14 + 0.3*Math.abs(Math.cos(u))) + ')';
+      ctx.beginPath(); ctx.moveTo(x, yT - ry); ctx.lineTo(x, yB + ry); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawCoin(angle, cx, cy, R, T, sheen, alpha){
+    var c = Math.cos(angle), s = Math.sin(angle);
+    var ry = R*Math.abs(c);
+    var off = (T/2)*s;
+    var yA = cy + off, yB2 = cy - off;
+    var yT = Math.min(yA,yB2), yBt = Math.max(yA,yB2);
+    var nearY = c > 0 ? yA : yB2;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // far face silhouette (edge metal)
+    ctx.beginPath(); ctx.ellipse(cx, (nearY === yT ? yBt : yT), R, ry, 0, 0, Math.PI*2);
+    ctx.fillStyle = '#7d580c'; ctx.fill();
+
+    drawEdge(cx, yT, yBt, R, ry);
+    drawFace(cx, nearY, R, ry, c > 0 ? 0 : 1, sheen);
+    ctx.restore();
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    var cx = W/2;
+    var R  = Math.min(W,H)*0.335;
+    var T  = R*0.135;
+    var restY = H*0.53;
+    var cy = restY - S.hover;
+
+    // shadow
+    var lift = Math.min(1, S.hover/34);
+    var sw = R*(1.34 - lift*0.34), sh = R*0.20*(1 - lift*0.25);
+    var sg = ctx.createRadialGradient(cx, H*0.855, 1, cx, H*0.855, sw);
+    var a0 = getComputedStyle(document.documentElement).getPropertyValue('--shadow-a').trim() || '.3';
+    var base = parseFloat(a0) * (1 - lift*0.42);
+    sg.addColorStop(0,'rgba(20,12,0,' + base.toFixed(3) + ')');
+    sg.addColorStop(0.55,'rgba(20,12,0,' + (base*0.4).toFixed(3) + ')');
+    sg.addColorStop(1,'rgba(20,12,0,0)');
+    ctx.save();
+    ctx.translate(cx, H*0.855); ctx.scale(1, sh/sw); ctx.translate(-cx, -H*0.855);
+    ctx.fillStyle = sg;
+    ctx.beginPath(); ctx.arc(cx, H*0.855, sw, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+
+    // motion-blur samples while fast
+    var samples = (!reduced && Math.abs(S.speed) > 9) ? 3 : 1;
+    for(var i=0;i<samples;i++){
+      var a = S.angle - (i * S.speed * 0.006);
+      drawCoin(a, cx, cy, R, T, S.sheen, 1/samples);
+    }
+  }
+
+  /* ---------- audio ---------- */
+  var AC=null, whir=null, whirGain=null;
+  function audio(){
+    if(!S.sound) return null;
+    try{
+      if(!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+      if(AC.state === 'suspended') AC.resume();
+      return AC;
+    }catch(e){ return null; }
+  }
+  function startWhir(){
+    var ac = audio(); if(!ac) return;
+    stopWhir();
+    whir = ac.createOscillator(); whirGain = ac.createGain();
+    var lfo = ac.createOscillator(), lfoG = ac.createGain();
+    whir.type='sawtooth'; whir.frequency.value = 78;
+    lfo.frequency.value = 7.4; lfoG.gain.value = 26;
+    lfo.connect(lfoG); lfoG.connect(whir.frequency);
+    whirGain.gain.value = 0.0001;
+    whirGain.gain.linearRampToValueAtTime(0.035, ac.currentTime + 0.12);
+    var flt = ac.createBiquadFilter(); flt.type='lowpass'; flt.frequency.value=900;
+    whir.connect(flt); flt.connect(whirGain); whirGain.connect(ac.destination);
+    whir.start(); lfo.start();
+    whir._lfo = lfo;
+  }
+  function stopWhir(){
+    if(!whir) return;
+    try{
+      whirGain.gain.cancelScheduledValues(AC.currentTime);
+      whirGain.gain.setTargetAtTime(0.0001, AC.currentTime, 0.05);
+      whir.stop(AC.currentTime + 0.3); whir._lfo.stop(AC.currentTime + 0.3);
+    }catch(e){}
+    whir = null;
+  }
+  function ting(rich){
+    var ac = audio(); if(!ac) return;
+    (rich ? [880, 1174, 1760, 2637] : [1174, 1760, 2637]).forEach(function(f, i){
+      var o = ac.createOscillator(), g = ac.createGain();
+      o.type='sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.16/(i+1.4), ac.currentTime + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 1.1 - i*0.24);
+      o.connect(g); g.connect(ac.destination);
+      o.start(); o.stop(ac.currentTime + 1.2);
+    });
+  }
+
+  /* ---------- flip logic ---------- */
+  function flipBit(){
+    try{
+      var u = new Uint32Array(1);
+      crypto.getRandomValues(u);
+      return u[0] < 2147483648 ? 0 : 1;
+    }catch(e){ return Math.random() < 0.5 ? 0 : 1; }
+  }
+
+  function setButton(state, text){
+    btn.dataset.state = state;
+    btn.textContent = text;
+  }
+
+  function startSpin(){
+    if(S.phase === 'spin' || S.phase === 'settle') return;
+    if(S.mode === 3 && S.seriesDone) newSeries();
+    S.phase = 'spin';
+    S.speed = reduced ? 11 : 21.5;
+    S.result = null;
+    $('verdict').classList.remove('show');
+    $('verdictLabel').textContent = S.mode === 3
+      ? 'Round ' + (S.series.length + 1) + ' — stop it when you’re ready'
+      : 'Spinning — stop it when you’re ready';
+    $('verdictNote').textContent = '';
+    $('plaqueA').classList.remove('won'); $('plaqueB').classList.remove('won');
+    renderSeries();
+    setButton('spin','Stop it');
+    startWhir();
+    loop();
+  }
+
+  function stopSpin(){
+    if(S.phase !== 'spin') return;
+    S.result = flipBit();
+    var target = S.result === 0 ? 0 : Math.PI;
+    var a = S.angle;
+    var extra = reduced ? 1 : 2;                       // extra whole flips before landing
+    var k = Math.ceil((a + extra*Math.PI*2 - target) / (Math.PI*2));
+    S.from = a;
+    S.to = target + k*Math.PI*2;
+    S.dur = reduced ? 620 : 1180;
+    S.t0 = performance.now();
+    S.phase = 'settle';
+    setButton('settle','Landing…');
+    stopWhir();
+  }
+
+  function land(){
+    S.phase = 'result';
+    S.speed = 0;
+    S.angle = ((S.to % (Math.PI*2)) + Math.PI*2) % (Math.PI*2);
+
+    var seriesWin = false;
+    if(S.mode === 3){
+      var pa = 0, pb = 0;
+      for(var k=0;k<S.series.length;k++){ if(S.series[k] === 0) pa++; else pb++; }
+      seriesWin = (S.result === 0 ? pa : pb) === 1;
+    }
+    ting(seriesWin);
+    if(navigator.vibrate) { try{ navigator.vibrate([14,40,22]); }catch(e){} }
+
+    var won = label(S.result);
+    var entry = { s:S.result, l:won, t:Date.now(), q:qIn.value.trim() };
+
+    if(S.mode === 3){
+      S.series.push(S.result);
+      var a = 0, b = 0;
+      for(var i=0;i<S.series.length;i++){ if(S.series[i] === 0) a++; else b++; }
+      var over = (a === 2 || b === 2);
+      S.seriesDone = over;
+      entry.r = S.series.length;
+
+      if(over){
+        var champ = a === 2 ? 0 : 1;
+        var hi = Math.max(a,b), lo = Math.min(a,b);
+        entry.f = 1;
+        $('verdictLabel').textContent = 'Best of three · ' + hi + '–' + lo;
+        $('verdictWord').textContent = label(champ);
+        $('verdictNote').innerHTML = 'Relieved, or quietly annoyed? <b>That reaction is the real answer.</b>';
+        (champ === 0 ? $('plaqueA') : $('plaqueB')).classList.add('won');
+        setButton('idle','New series');
+      } else {
+        $('verdictLabel').textContent = 'Round ' + S.series.length + ' goes to';
+        $('verdictWord').textContent = won;
+        $('verdictNote').textContent = 'Series stands at ' + a + '–' + b + '. First to two takes it.';
+        (S.result === 0 ? $('plaqueA') : $('plaqueB')).classList.add('won');
+        setButton('idle','Toss round ' + (S.series.length + 1));
+      }
+      renderSeries();
+    } else {
+      $('verdictLabel').textContent = 'The coin says';
+      $('verdictWord').textContent = won;
+      $('verdictNote').innerHTML = 'Relieved, or quietly annoyed? <b>That reaction is the real answer.</b>';
+      (S.result === 0 ? $('plaqueA') : $('plaqueB')).classList.add('won');
+      setButton('idle','Toss again');
+    }
+
+    S.log.unshift(entry);
+    S.log = S.log.slice(0,40);
+    save();
+
+    $('verdict').classList.add('show');
+    renderLog();
+    draw();
+  }
+
+  /* ---------- animation ---------- */
+  var last = 0, running = false;
+  function loop(now){
+    if(!running){ running = true; last = performance.now(); requestAnimationFrame(loop); return; }
+    now = now || performance.now();
+    var dt = Math.min((now - last)/1000, 0.05); last = now;
+
+    if(!reduced) S.sheen = (S.sheen + dt*0.16) % 1;
+
+    if(S.phase === 'spin'){
+      S.angle += S.speed*dt;
+      S.hover += ((22 + Math.sin(now/380)*10) - S.hover) * Math.min(1, dt*5);
+    } else if(S.phase === 'settle'){
+      var p = Math.min(1, (now - S.t0)/S.dur);
+      var e = 1 - Math.pow(1-p, 4);
+      var wob = Math.sin(p*Math.PI*3) * 0.085 * Math.pow(1-p, 2.2);
+      S.angle = S.from + (S.to - S.from)*e + wob;
+      S.speed = (1-p) * 21.5;
+      S.hover = 22 * Math.pow(1-p, 1.6) + Math.abs(Math.sin(p*Math.PI*2))*3*(1-p);
+      if(p >= 1){ S.hover = 0; land(); }
+    } else {
+      S.hover += (0 - S.hover) * Math.min(1, dt*6);
+      S.speed = 0;
+    }
+
+    draw();
+
+    var idle = (S.phase === 'idle' || S.phase === 'result');
+    if(idle && reduced && S.hover < 0.2){ running = false; return; }
+    requestAnimationFrame(loop);
+  }
+
+  /* ---------- series ---------- */
+  function newSeries(){
+    S.series = [];
+    S.seriesDone = false;
+    renderSeries();
+  }
+
+  function renderSeries(){
+    var wrap = $('series');
+    wrap.classList.toggle('on', S.mode === 3);
+    if(S.mode !== 3) return;
+
+    var a = 0, b = 0;
+    for(var i=0;i<S.series.length;i++){ if(S.series[i] === 0) a++; else b++; }
+    var over = (a === 2 || b === 2);
+
+    for(var j=0;j<3;j++){
+      var slot = $('slot' + j), who = slot.querySelector('.who');
+      slot.className = 'slot';
+      if(j < S.series.length){
+        slot.classList.add('filled');
+        slot.classList.add(S.series[j] === 0 ? 'a' : 'b');
+        who.textContent = label(S.series[j]);
+      } else if(over){
+        slot.classList.add('dead');
+        who.textContent = 'not needed';
+      } else if(j === S.series.length){
+        slot.classList.add('next');
+        who.textContent = (S.phase === 'spin' || S.phase === 'settle') ? 'spinning…' : 'up next';
+      } else {
+        who.textContent = '—';
+      }
+    }
+  }
+
+  function setMode(m){
+    S.mode = m;
+    $('mode1').classList.toggle('is-on', m === 1);
+    $('mode3').classList.toggle('is-on', m === 3);
+    $('mode1').setAttribute('aria-pressed', String(m === 1));
+    $('mode3').setAttribute('aria-pressed', String(m === 3));
+    $('hint').textContent = m === 3
+      ? 'First side to win two tosses takes it. Tap to spin, tap again to stop — or hold and let go.'
+      : 'Tap to spin, tap again to stop — or hold and let go. Spacebar works too.';
+    newSeries();
+    $('plaqueA').classList.remove('won'); $('plaqueB').classList.remove('won');
+    $('verdict').classList.remove('show');
+    $('verdictLabel').textContent = m === 3 ? 'Best of three — nothing decided yet' : 'Nothing decided yet';
+    $('verdictNote').textContent = '';
+    setButton('idle', m === 3 ? 'Toss round 1' : 'Toss the coin');
+    save();
+  }
+
+  /* ---------- log ---------- */
+  function renderLog(){
+    var strip = $('logStrip');
+    var a = 0, b = 0;
+    for(var i=0;i<S.log.length;i++){ if(S.log[i].s === 0) a++; else b++; }
+    $('tallyA').textContent = a + '×';
+    $('tallyB').textContent = b + '×';
+    $('logSummary').textContent = S.log.length
+      ? S.log.length + ' tosses · heads ' + a + ' · tails ' + b + ' · crypto-random, 50/50 every time'
+      : 'No tosses yet · crypto-random, 50/50 every time';
+
+    if(!S.log.length){ strip.innerHTML = '<span class="log-empty">Your results will stack up here.</span>'; return; }
+    strip.innerHTML = '';
+    for(var j=0;j<S.log.length;j++){
+      var e = S.log[j];
+      var d = new Date(e.t);
+      var el = document.createElement('span');
+      el.className = 'chip' + (e.s === 1 ? ' rev' : '');
+      var dot = document.createElement('i');
+      var nm = document.createElement('b');
+      nm.textContent = (e.f ? '★ ' : '') + e.l + (e.r && !e.f ? ' · R' + e.r : '');
+      var tm = document.createElement('span');
+      tm.textContent = ('0'+d.getHours()).slice(-2) + ':' + ('0'+d.getMinutes()).slice(-2);
+      el.appendChild(dot); el.appendChild(nm); el.appendChild(tm);
+      strip.appendChild(el);
+    }
+  }
+
+  /* ---------- input wiring ---------- */
+  function bindPress(node){
+    var downAt = 0, started = false;
+    node.addEventListener('pointerdown', function(){
+      downAt = performance.now();
+      if(S.phase === 'spin'){ stopSpin(); started = false; }
+      else if(S.phase !== 'settle'){ startSpin(); started = true; }
+    });
+    node.addEventListener('pointerup', function(){
+      if(started && S.phase === 'spin' && performance.now() - downAt > 340) stopSpin();
+      started = false;
+    });
+    node.addEventListener('pointercancel', function(){ started = false; });
+  }
+  bindPress(btn); bindPress(stage);
+
+  function toggle(){
+    if(S.phase === 'spin') stopSpin();
+    else if(S.phase !== 'settle') startSpin();
+  }
+  function keyHandler(e){
+    if(e.key === ' ' || e.key === 'Enter'){
+      var t = e.target;
+      if(t && /^(INPUT|TEXTAREA)$/.test(t.tagName)) return;
+      e.preventDefault(); toggle();
+    }
+  }
+  btn.addEventListener('keydown', keyHandler);
+  stage.addEventListener('keydown', keyHandler);
+  document.addEventListener('keydown', function(e){
+    if(e.key === ' ' && e.target === document.body){ e.preventDefault(); toggle(); }
+  });
+
+  [aIn,bIn].forEach(function(inp){
+    inp.addEventListener('input', function(){ save(); draw(); renderSeries(); });
+  });
+
+  $('mode1').addEventListener('click', function(){ if(S.phase !== 'settle') setMode(1); });
+  $('mode3').addEventListener('click', function(){ if(S.phase !== 'settle') setMode(3); });
+  qIn.addEventListener('input', function(){ $('sample').style.display = 'none'; save(); });
+  qIn.addEventListener('focus', function(){ $('sample').style.display = 'none'; });
+
+  $('sound').addEventListener('click', function(){
+    S.sound = !S.sound;
+    this.setAttribute('aria-pressed', String(S.sound));
+    this.textContent = S.sound ? 'Sound on' : 'Sound off';
+    if(!S.sound) stopWhir();
+    save();
+  });
+
+  $('clearLog').addEventListener('click', function(){
+    S.log = []; save(); renderLog();
+  });
+
+  /* ---------- boot ---------- */
+  load();
+  $('sound').setAttribute('aria-pressed', String(S.sound));
+  $('sound').textContent = S.sound ? 'Sound on' : 'Sound off';
+  renderLog();
+  setMode(S.mode);
+
+  if(window.ResizeObserver){ new ResizeObserver(resize).observe(stage); }
+  window.addEventListener('resize', resize);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+
+  resize();
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ resize(); });
+  if(!reduced) loop();
+})();
+</script>
