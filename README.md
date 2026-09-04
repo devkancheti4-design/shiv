@@ -3,7 +3,10 @@
 A coin-flip decision maker for when you're stuck between two things. You write both
 sides, you start the toss, and you stop it yourself.
 
-Single HTML file. No build step, no dependencies, no tracking. Open `index.html`.
+### ▶ Play it: **https://devkancheti4-design.github.io/shiv/**
+
+Single HTML file — [`index.html`](index.html). No build step, no dependencies, no
+tracking. Download it and double-click it and it works, online or off.
 
 ## What it does
 
@@ -45,5 +48,15 @@ a struck-metal chime on landing (four notes instead of three when a series is wo
 
 ## Deploy
 
-It's one file, so anything that serves static HTML works. For GitHub Pages: enable
-Pages on the `main` branch at the repository root.
+It's one file, so anything that serves static HTML works. This repo is served by
+GitHub Pages from `main` at the repository root — pushing to `main` updates the
+live page within a minute or so.
+
+## One note, believe it or don't
+
+This is a coin, not a fortune teller. It knows nothing about your money, your road,
+or the people in your life — it only breaks a tie your gut has usually broken
+already. Watch which side you were hoping for while it spun. That was your answer
+the whole time.
+
+**Trust your gut. Do the right thing either way.**

@@ -229,6 +229,20 @@
   .chip.rev i{background:var(--verdigris)}
   .log-empty{color:var(--muted);font-size:12px;font-style:italic}
 
+  /* ---- the note ---- */
+  .note{
+    border-top:1px solid var(--line);padding-top:18px;margin-top:2px;
+    display:flex;flex-direction:column;gap:9px;align-items:center;text-align:center;
+  }
+  .note .eyebrow{display:flex;align-items:center;gap:9px}
+  .note .eyebrow::before,.note .eyebrow::after{content:"";width:22px;height:1px;background:var(--line)}
+  .note p{margin:0;max-width:58ch;font-size:13.5px;line-height:1.6;color:var(--muted);text-wrap:pretty}
+  .note strong{color:var(--text);font-weight:500}
+  .note .close{
+    font-family:Cinzel,Georgia,serif;font-size:15px;letter-spacing:.04em;
+    color:var(--brass);max-width:none;
+  }
+
   @media (prefers-reduced-motion:reduce){
     .verdict-word,.verdict-note{transition:none}
   }
@@ -294,6 +308,15 @@
     </div>
     <div class="log-strip" id="logStrip"><span class="log-empty">Your results will stack up here.</span></div>
   </section>
+
+  <footer class="note">
+    <p class="eyebrow">Believe it or don&rsquo;t</p>
+    <p>This is a coin, not a fortune teller. It knows nothing about your money, your road, or
+      the people in your life &mdash; <strong>it only breaks a tie your gut has usually broken
+      already.</strong> Watch which side you were hoping for while it spun. That was your answer
+      the whole time.</p>
+    <p class="close">Trust your gut. Do the right thing either way.</p>
+  </footer>
 
 </div>
 
