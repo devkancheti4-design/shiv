@@ -110,8 +110,22 @@
     padding:6px 8px 10px;border-bottom:1px dashed var(--line);
   }
   .q::placeholder{color:var(--muted);opacity:.75}
-  .q:focus{outline:none;border-bottom-color:var(--brass)}
-  .sample{color:var(--muted);font-size:12px}
+  .q:hover{border-bottom-color:var(--brass)}
+  .q:focus{outline:none;border-bottom-color:var(--brass);border-bottom-style:solid}
+  .q[data-sample]{color:var(--muted)}
+
+  .egs{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;align-items:center}
+  .egs .lbl{
+    font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+    font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);
+  }
+  .eg{
+    background:var(--surface);border:1px solid var(--line);border-radius:999px;cursor:pointer;
+    padding:6px 12px;font:400 12.5px/1 "IBM Plex Sans",sans-serif;color:var(--muted);
+    transition:border-color .2s,color .2s;
+  }
+  .eg:hover{border-color:var(--brass);color:var(--text)}
+  .eg:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 
   /* ---- table: plaques + stage ---- */
   .table{
@@ -262,15 +276,21 @@
   </header>
 
   <section class="ask">
-    <p class="eyebrow">Stuck between two things</p>
-    <input class="q" id="question" value="Should I buy the bike?" maxlength="90" aria-label="Your question">
-    <p class="sample mono" id="sample">Sample question &mdash; type over it</p>
+    <p class="eyebrow">Your question &mdash; tap it and type</p>
+    <input class="q" id="question" value="Should I buy the bike?" data-sample="1" maxlength="90"
+           placeholder="What are you torn between?" aria-label="Your question">
+    <div class="egs">
+      <span class="lbl">Or start from</span>
+      <button type="button" class="eg" data-q="Should I buy the bike?" data-a="Buy it" data-b="Don&rsquo;t buy it">Buy the bike?</button>
+      <button type="button" class="eg" data-q="Should I take the job?" data-a="Take it" data-b="Stay put">Take the job?</button>
+      <button type="button" class="eg" data-q="Should I text them first?" data-a="Text them" data-b="Leave it">Text them first?</button>
+    </div>
   </section>
 
   <section class="table">
     <div class="plaque" id="plaqueA">
       <div class="plaque-head"><span class="eyebrow">Obverse &middot; heads</span><span class="tally" id="tallyA">0&times;</span></div>
-      <input class="side-in" id="sideA" value="Buy it" maxlength="34" placeholder="Yes" aria-label="Heads means">
+      <input class="side-in" id="sideA" value="Buy it" data-sample="1" maxlength="34" placeholder="This one" aria-label="Heads means">
     </div>
 
     <div class="stage" id="stage" tabindex="0" role="button" aria-label="Coin. Press to spin, press again to stop.">
@@ -279,7 +299,7 @@
 
     <div class="plaque plaque--rev" id="plaqueB">
       <div class="plaque-head"><span class="eyebrow">Reverse &middot; tails</span><span class="tally" id="tallyB">0&times;</span></div>
-      <input class="side-in" id="sideB" value="Don't buy it" maxlength="34" placeholder="No" aria-label="Tails means">
+      <input class="side-in" id="sideB" value="Don&rsquo;t buy it" data-sample="1" maxlength="34" placeholder="The other one" aria-label="Tails means">
     </div>
   </section>
 
@@ -328,6 +348,16 @@
   var cv = $('coin'), ctx = cv.getContext('2d');
   var stage = $('stage'), btn = $('toss');
   var qIn = $('question'), aIn = $('sideA'), bIn = $('sideB');
+
+  // The prefilled example is a starting point, not a question we are asking.
+  // Touch any of these fields and that field hands itself over to you.
+  function isSample(el){ return el.getAttribute('data-sample') === '1'; }
+  function ownField(el){
+    if(!isSample(el)) return false;
+    el.value = '';
+    el.removeAttribute('data-sample');
+    return true;
+  }
   var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   var KEY = 'deciding-coin/v1';
@@ -352,7 +382,8 @@
   function save(){
     try{
       localStorage.setItem(KEY, JSON.stringify({
-        q:qIn.value, a:aIn.value, b:bIn.value, log:S.log.slice(0,40), sound:S.sound, mode:S.mode
+        q:qIn.value, a:aIn.value, b:bIn.value, log:S.log.slice(0,40), sound:S.sound, mode:S.mode,
+        sq:isSample(qIn)?1:0, sa:isSample(aIn)?1:0, sb:isSample(bIn)?1:0
       }));
     }catch(e){}
   }
@@ -362,7 +393,10 @@
       if(!raw) return;
       var d = JSON.parse(raw);
       if(d && typeof d === 'object'){
-        if(typeof d.q === 'string' && d.q) { qIn.value = d.q; $('sample').style.display='none'; }
+        if(typeof d.q === 'string') qIn.value = d.q;
+        if(d.sq !== 1) qIn.removeAttribute('data-sample');
+        if(d.sa !== 1) aIn.removeAttribute('data-sample');
+        if(d.sb !== 1) bIn.removeAttribute('data-sample');
         if(typeof d.a === 'string') aIn.value = d.a;
         if(typeof d.b === 'string') bIn.value = d.b;
         if(Array.isArray(d.log)) S.log = d.log.slice(0,40);
@@ -874,13 +908,30 @@
   });
 
   [aIn,bIn].forEach(function(inp){
-    inp.addEventListener('input', function(){ save(); draw(); renderSeries(); });
+    inp.addEventListener('input', function(){
+      inp.removeAttribute('data-sample');
+      save(); draw(); renderSeries();
+    });
   });
 
   $('mode1').addEventListener('click', function(){ if(S.phase !== 'settle') setMode(1); });
   $('mode3').addEventListener('click', function(){ if(S.phase !== 'settle') setMode(3); });
-  qIn.addEventListener('input', function(){ $('sample').style.display = 'none'; save(); });
-  qIn.addEventListener('focus', function(){ $('sample').style.display = 'none'; });
+  [qIn, aIn, bIn].forEach(function(el){
+    el.addEventListener('focus', function(){ if(ownField(el)){ save(); draw(); } });
+    el.addEventListener('pointerdown', function(){ if(ownField(el)){ save(); draw(); } });
+  });
+  qIn.addEventListener('input', function(){ qIn.removeAttribute('data-sample'); save(); });
+
+  Array.prototype.forEach.call(document.querySelectorAll('.eg'), function(chip){
+    chip.addEventListener('click', function(){
+      qIn.value = chip.getAttribute('data-q');
+      aIn.value = chip.getAttribute('data-a');
+      bIn.value = chip.getAttribute('data-b');
+      [qIn, aIn, bIn].forEach(function(el){ el.removeAttribute('data-sample'); });
+      setMode(S.mode);
+      draw();
+    });
+  });
 
   $('sound').addEventListener('click', function(){
     S.sound = !S.sound;
